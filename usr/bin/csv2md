@@ -1,0 +1,104 @@
+#! /bin/bash
+
+SCRIPT_VERSION="1.0.0"
+
+PARAM_TITLE=""
+
+# $1: TITLE_LEVEL
+# Must be from 1 to 4
+function check_title_level() {
+    case "$1" in
+        1) ;;
+        2) ;;
+        3) ;;
+        4) ;;        
+        *) echo "Error - --set-title-level support values from 1 to 4" >&2; exit 1;;
+    esac
+}
+
+function help() {
+    cat <<-EOF
+
+NAME
+    csv2md - CSV to markdown converter
+
+SYNOPSIS
+    Usage: csv2md [OPTIONS] < input.csv > output.md
+
+DESCRIPTION
+    Convert a csv file with ; separator to a markdown table.
+
+    --set-title
+      set the markdown file title
+      
+    --version
+      display version and quit
+
+    --help
+      display help and quit
+
+    Exit status:
+        0      if OK,
+        1      if any problem
+
+Note
+  The md columns may looks not align. This is a choice to limit the md size file.
+
+COPYRIGHT
+
+...
+
+Report bugs to <jfv.opensource@gmail.com>
+EOF
+}
+
+# =============================================================================
+# NAME: version
+# DESC: display version of this tool
+# =============================================================================
+function version() {
+    cat <<-EOF
+CSV2MD converter - ${SCRIPT_VERSION}
+This is free software; see the source for copying conditions.
+Written by J.F. Vincent
+EOF
+}
+
+opts=$(getopt \
+    --longoptions "help,version,set-title:" \
+    --name "$(basename "$0")" \
+    --options "" \
+    -- "$@"
+)
+eval set "--$opts"
+
+while [ $# -gt 0 ]
+do
+    case "$1" in
+        --help) help; exit;;
+        --version) version; exit;;
+        --set-title) PARAM_TITLE="$2"; shift;;
+    esac
+    shift
+done
+
+HEADER_FLAG=0
+
+if [ -n "${PARAM_TITLE}" ];
+then
+  
+  echo "#${PARAM_TITLE}"
+fi
+
+while read -r line
+do
+  if [ "${HEADER_FLAG}" == "0" ] 
+  then 
+      echo "${line//;/|}"
+      echo "${line}"|sed 's/[^;]/-/g'|sed 's/;/|/g'
+      HEADER_FLAG=1
+  else
+    echo "${line//;/|}"
+  fi
+  
+done < "${1:-/dev/stdin}"
